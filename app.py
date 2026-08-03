@@ -2,14 +2,14 @@ from flask import Flask, request, jsonify, render_template
 from ask import ask_question
 from ingest import clone_repo, get_code_files
 from build_index import build_all_chunks
-from sentence_transformers import SentenceTransformer
+from fastembed import TextEmbedding
 import chromadb
 import os
 
 app = Flask(__name__)
 
 # Load the embedding model once when the server starts (not on every request)
-embed_model = SentenceTransformer("all-MiniLM-L6-v2")
+embed_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
 chroma_client = chromadb.PersistentClient(path="chroma_db")
 
 
@@ -49,7 +49,7 @@ def load_repo():
         for i in range(0, len(chunks), batch_size):
             batch = chunks[i:i + batch_size]
             texts = [c["code"] for c in batch]
-            embeddings = embed_model.encode(texts).tolist()
+            embeddings = [e.tolist() for e in embed_model.embed(texts)]
             ids = [f"{c['file_path']}::{c['name']}::{c['start_line']}" for c in batch]
             metadatas = [{
                 "file_path": c["file_path"],

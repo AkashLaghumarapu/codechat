@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from groq import Groq
-from sentence_transformers import SentenceTransformer
+from fastembed import TextEmbedding
 import chromadb
 
 # Load the API key from .env
@@ -9,7 +9,7 @@ load_dotenv()
 groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 # Load the same embedding model used before (must match!)
-embed_model = SentenceTransformer("all-MiniLM-L6-v2")
+embed_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
 
 # Connect to the same Chroma database
 chroma_client = chromadb.PersistentClient(path="chroma_db")
@@ -19,7 +19,7 @@ chroma_client = chromadb.PersistentClient(path="chroma_db")
 def retrieve_chunks(question, top_k=3):
     """Search the vector database for the most relevant code chunks."""
     collection = chroma_client.get_or_create_collection(name="code_chunks")  # fetch fresh, in case it was recreated
-    query_embedding = embed_model.encode([question]).tolist()
+    query_embedding = list(embed_model.embed([question]))[0].tolist()
     results = collection.query(query_embeddings=query_embedding, n_results=top_k)
 
     chunks = []
