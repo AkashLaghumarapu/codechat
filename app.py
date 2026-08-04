@@ -45,7 +45,7 @@ def load_repo():
             return jsonify({"status": "error", "message": "No Python code chunks found in this repo."})
 
         # Step 5: Embed and store in batches (same logic as embed_and_store.py)
-        batch_size = 50
+        batch_size = 10
         for i in range(0, len(chunks), batch_size):
             batch = chunks[i:i + batch_size]
             texts = [c["code"] for c in batch]
